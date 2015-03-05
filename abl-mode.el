@@ -1,9 +1,11 @@
+
 ;; Helpers
 
 (defun comment ()
   nil)
 
 
+;; see also: https://decada.googlecode.com/hg/Editra/src/syntax/_progress.py
 (defconst abl-keywords
        '("def" "define" "var" "variable" "char" "character" "int" "integer" "dec" "decimal"
 	     "log" "logical" "as" "extent" "if" "then" "else" "end" "do" "elseif" "endif"
@@ -12,8 +14,10 @@
 	     "procedure" "function" "forward" "returns" "temp-table" "for" "each"
 	     "delete" "in" "empty" "find" "handle" "first" "last" "length" "modulo" "not"
 	     "now" "today" "output" "stream" "index" "rindex" "replace" "round" "string"
-	     "rowid" "sqrt" "substring" "trim" "tran" "undo" "leave" "input" "output"
+	     "rowid" "sqrt" "substring" "trim" "tran" "leave" "input" "output"
 		 "return" "num-entries" "subst" "no-undo" "disp" "format" "with" "down" "frame"
+		 "to" "param" "parameter" "entry" "put" "close" "run" "label" "no-box" "width"
+		 "where" "no-lock" "skip" "column"
 	     "find first"
 	     "group by"))
 
@@ -30,7 +34,7 @@
 
 ;;Highlighting
 (defvar keyword-re
-  (concat "\\<"
+  (concat "[^\\.]\\<"
 		  (regexp-opt ;;build me a regex worthy of mordor that matches all of these!
 		   (append
 			(mapcar 'upcase abl-keywords)
@@ -42,72 +46,100 @@
   (list
    '(keyword-re . font-lock-builtin-face)))
 
+
+;;Syntax
 (defvar abl-mode-syntax-table
-  (let ((abl-mode-syntax-table (make-syntax-table)))
-	(modify-syntax-entry ?- "w" abl-mode-syntax-table)
-	(modify-syntax-entry ?/ ". 24" abl-mode-syntax-table)
-	(modify-syntax-entry ?* ". 23" abl-mode-syntax-table)
-	abl-mode-syntax-table))
+  (let ((st (make-syntax-table)))
+	(modify-syntax-entry ?- "w" st) ;- and _ can be in words
+	(modify-syntax-entry ?_ "w" st)
+	(modify-syntax-entry ?/ ". 24" st)
+	(modify-syntax-entry ?* ". 23" st)
+	st))
 						 
 
 
 
 
+;;Indentation =================================================
+;; Indentation Rule:
+;;  0) Don't look at blank lines
+;;  1) If we're at the beginning of the file, indent to 0.
+;;  2) If the previous line ends in ":" (block defn) increase indentation.
+;;  3) If **this** line is an "END." decrease indentation
+;;  N) Otherwise stay const
 
-
-;;Indentation
-(defun look-prev (expr)
+(defun peek-prev (rexp)
   (save-excursion
 	(progn
 	  (forward-line -1)
-	  (if (looking-at "^[ \\t]*$")
-		  (look-prev expr)
-		(looking-at expr)))))
+	  (looking-at rexp))))
 
-(defun look-pprev (expr)
-  (save-excursion
-	(progn
-	  (forward-line -1)
-	  (if (looking-at "^[ \\t]*$")
-		  (look-pprev expr)
-		(look-prev expr)))))
+(defun prev-blank-p ()
+  (peek-prev "^[ \\t]*$"))
 
-(defun ind-of-prev ()
-  (save-excursion
-	(progn
-	  (forward-line -1)
-	  (current-indentation))))
+(defun prev-dot-p ()
+  (peek-prev ".*\\.[ \\t]*$"))
 
-(defun abl-indent-line ()
-  "Indent currnet line as ABL."
-  (interactive)
-  (beginning-of-line)
-  (let (cur-indent)
-	(cond
-	 ((bobp) ;don't indent first line of file
-	  (indent-line-to 0))
+(defun prev-block-p ()
+  (peek-prev ".*\\:[ \\t]*$"))
 
-	 ((look-prev ".*\\.[ \\t]*$") ;prev ends .
-	  (if (or
-		   (looking-at "^[\\t ]*END\\.[\\t ]*$") ;end of block
-		   (look-pprev "[^\\.][\\t ]*$")) ;out of multi-line
-		  (setq cur-indent (- (ind-of-prev) default-tab-width))
-		(setq cur-indent (ind-of-prev))))
-	 ((look-prev ".*[^\\.][\\t ]*$") ;prev doesn't end .
-	  (if (look-pprev ".*\\.[ \\t]*$")
-		  (setq cur-indent (+ (ind-of-prev) default-tab-width))
-		(setq cur-indent (ind-of-prev)))))
-	(if cur-indent
-		(if (> cur-indent 0)
-			(indent-line-to cur-indent)
-		  (indent-line-to 0))
-	  (indent-line-to 0))))
+(defun indent-for-block ()
+  (cond
+   ((prev-blank-p)
+	(+ (current-indentation) default-shift-width))
+   ((prev-dot-p)
+	(+ (current-indentation) default-shift-width))
+   (t ; probably a multi-line block indent
+	(current-indentation))))
+
+
+(defmacro on-prev-line (&rest p)
+  `(save-excursion
+	   ,(append '(progn (forward-line -1)) p)))
+
+;; (defun abl-indent-line ()
+;;   (let (ind)
+;; 	(cond
+;; 	 ;;Rule 1
+;; 	 ((bobp)
+;; 	  (setq ind 0))
+;; 	 ;; Don't count whitespace
+;; 	 ((prev-blank-p)
+;; 	  (on-prev-line
+;; 	   (setq ind (abl-indent-line))))
+;; 	 ;;Rule 2
+;; 	 ((prev-block-p)
+;; 	  (on-prev-line
+;; 	   (setq ind (indent-for-block))))
+;; 	 ;;Rule 3
+;; 	 ((looking-at ".*END\\.[ \\t]$")
+;; 	  (on-prev-line
+;; 	   (setq (- (current-indentation) default-shift-width))))
+;; 	 ;;Rule N
+;; 	 (t
+;; 	  (on-prev-line
+;; 	   (setq ind (current-indentation)))))
+;; 	(if ind
+;; 		(if (> ind 0)
+;; 			(indent-line-to ind)
+;; 		  (indent-line-to 0)))
+;; 	ind))
+
+
+
+
+
 		  
 	 
-;; Capitalization
-(define-abbrev-table 'fundamental-mode-abbrev-table
+;; Auto-Capitalization
+(define-abbrev-table 'abl-mode-abbrev-table
   (mapcar #'(lambda (v) (list v (upcase v) nil 1))
-	  abl-keywords))
+		  abl-keywords))
+
+(abbrev-table-put abl-mode-abbrev-table :regexp (rx
+												 (or line-start string-start (any " ("))
+												 (group
+												  (one-or-more (any "a-zA-Z0-9-_")))))
 
 
 ;; Misc
@@ -115,27 +147,24 @@
   (setq abbrev-mode t)
   (setq save-abbrevs nil)
   (setq indent-tabs-mode nil)
-  (setq tab-stop-list (number-sequence 0 200 4)))
+  (setq tab-width 4)
+  (setq tab-stop-list (number-sequence 0 200 4))
+  (linum-mode))
+
 
 
 ;; Synthesis
-(defun abl-mode ()
-  "Major mode for editing ABL files"
-  (interactive)
-  (kill-all-local-variables)
-  (set-syntax-table abl-mode-syntax-table)
-  (use-local-map abl-mode-map)
-  (set (make-local-variable 'font-lock-defaults) '(abl-font-lock-keywords-1))
-  (set (make-local-variable 'indent-line-function) 'abl-indent-line)
-  (setq major-mode 'abl-mode)
-  (setq mode-name "ABL")
-  (misc)
-  (run-hooks 'abl-mode-hook))
+
+(define-derived-mode abl-mode
+  fundamental-mode "ABL"
+  "Major mode for editing ABL"
+  (misc))
 
 (provide 'abl-mode)
 
 
 ;; ===TODO:===
-;;
-;;  * indentation for assign statements and param lists
-;;  * syntax highlighting
+;;  * syntax highlighting!!!
+;;  * better keyword syntax handling
+;;  * indentation for assign statements and param lists (
+;;  * comment syntax?
