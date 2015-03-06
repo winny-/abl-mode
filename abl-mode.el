@@ -1,27 +1,24 @@
+;; Kewords ============================================================
+(defvar abl-keyword-list
+  '("def" "define" "var" "variable" "char" "character" "int" "integer" "dec" "decimal"
+	"log" "logical" "as" "extent" "if" "then" "else" "end" "do" "elseif" "endif"
+	"message" "date" "absolute" "and" "or" "assign" "available" "beings" "recid"
+	"can-do" "can-find" "case" "when" "create" "day" "month" "year" "datetime"
+	"procedure" "function" "forward" "returns" "temp-table" "for" "each"
+	"delete" "in" "empty" "find" "handle" "first" "last" "length" "modulo" "not"
+	"now" "today" "output" "stream" "index" "rindex" "replace" "round" "string"
+	"rowid" "sqrt" "substring" "trim" "tran" "leave" "input" "output"
+	"return" "num-entries" "subst" "no-undo" "disp" "format" "with" "down" "frame"
+	"to" "param" "parameter" "entry" "put" "close" "run" "label" "no-box" "width"
+	"where" "no-lock" "skip" "column"
+	"find first"
+	"group by"))
 
-;; Helpers
+(defvar abl-type-list
+  '("char" "character" "int" "integer" "format" "var" "variable" "log" "logical"
+	"date" "dec" "decimal"))
 
-(defun comment ()
-  nil)
-
-
-;; see also: https://decada.googlecode.com/hg/Editra/src/syntax/_progress.py
-(defconst abl-keywords
-       '("def" "define" "var" "variable" "char" "character" "int" "integer" "dec" "decimal"
-	     "log" "logical" "as" "extent" "if" "then" "else" "end" "do" "elseif" "endif"
-	     "message" "date" "absolute" "and" "or" "assign" "available" "beings" "recid"
-	     "can-do" "can-find" "case" "when" "create" "day" "month" "year" "datetime"
-	     "procedure" "function" "forward" "returns" "temp-table" "for" "each"
-	     "delete" "in" "empty" "find" "handle" "first" "last" "length" "modulo" "not"
-	     "now" "today" "output" "stream" "index" "rindex" "replace" "round" "string"
-	     "rowid" "sqrt" "substring" "trim" "tran" "leave" "input" "output"
-		 "return" "num-entries" "subst" "no-undo" "disp" "format" "with" "down" "frame"
-		 "to" "param" "parameter" "entry" "put" "close" "run" "label" "no-box" "width"
-		 "where" "no-lock" "skip" "column"
-	     "find first"
-	     "group by"))
-
-;; Define Mode
+;; Init ============================================================
 (defvar abl-mode-hook nil)
 
 (defvar abl-mode-map
@@ -32,31 +29,99 @@
 (add-to-list 'auto-mode-alist '("\\.p\\'" . abl-mode))
 
 
-;;Highlighting
-(defvar keyword-re
-  (concat "[^\\.]\\<"
-		  (regexp-opt ;;build me a regex worthy of mordor that matches all of these!
-		   (append
-			(mapcar 'upcase abl-keywords)
-			'("{\.+}"))
-		   t)
-		  "\\>"))
+;;Highlighting ==================================================
+(defvar abl-keyword-regexp
+  (regexp-opt (mapcar 'upcase abl-keyword-list) 'words))
 
-(defconst abl-font-lock-keywords-1
-  (list
-   '(keyword-re . font-lock-builtin-face)))
+(defvar abl-string-regexp
+  (rx (and "\""
+		   (zero-or-more
+			(or (not (any "\\\""))
+				"\n"))
+		   "\""))
+  "Regexp which matches a string")
+
+(defvar abl-comment-regexp
+  "\\(/\\*.*\\*/\\)"
+  "Regexp which matches an ABL comment")
+
+(defvar abl-font-lock-defaults
+  `((,abl-keyword-regexp . (1 font-lock-builtin-face))
+	(,abl-comment-regexp . (1 font-lock-comment-face))
+	(,abl-string-regexp . (1 font-lock-string-face))))
 
 
-;;Syntax
+
+
+  
+
+;;TODO: vars? types?
+
+
+
+
+;;Syntax====================================
 (defvar abl-mode-syntax-table
   (let ((st (make-syntax-table)))
 	(modify-syntax-entry ?- "w" st) ;- and _ can be in words
 	(modify-syntax-entry ?_ "w" st)
-	(modify-syntax-entry ?/ ". 24" st)
-	(modify-syntax-entry ?* ". 23" st)
 	st))
 						 
 
+
+
+
+
+		  
+	 
+;; Auto-Capitalization
+(define-abbrev-table 'abl-mode-abbrev-table
+  (mapcar #'(lambda (v) (list v (upcase v) nil 1))
+		  abl-keyword-list))
+
+(abbrev-table-put abl-mode-abbrev-table :regexp (rx
+												 (or line-start string-start (any " ("))
+												 (group
+												  (one-or-more (any "a-zA-Z0-9-_")))))
+
+
+
+;; Synthesis
+(define-derived-mode abl-mode
+  fundamental-mode "ABL"
+  "Major mode for editing ABL"
+  (setq font-lock-defaults '(abl-font-lock-defaults))
+  (setq abbrev-mode t)
+  (setq save-abbrevs nil)
+  (setq indent-tabs-mode nil)
+  (setq tab-width 4)
+  (setq tab-stop-list (number-sequence 0 200 4))
+  (linum-mode))
+
+
+(provide 'abl-mode)
+
+
+;; ===TODO:===
+;;  * syntax highlighting!!!
+;;  * better keyword syntax handling
+;;  * indentation for assign statements and param lists (
+;;  * comment syntax?
+
+
+;; Functions!
+
+(defun abl-assign-insert-tablename (tbl)
+  (interactive "sTable name: ")
+  (let (done)
+	(while (not done)
+	  (beginning-of-line)
+	  (forward-word)
+	  (backward-word)
+	  (insert tbl ".")
+	  (if (looking-at ".*\\.[\t ]*$")
+		  (setq done t)
+		(forward-line 1)))))
 
 
 
@@ -126,45 +191,3 @@
 ;; 	ind))
 
 
-
-
-
-		  
-	 
-;; Auto-Capitalization
-(define-abbrev-table 'abl-mode-abbrev-table
-  (mapcar #'(lambda (v) (list v (upcase v) nil 1))
-		  abl-keywords))
-
-(abbrev-table-put abl-mode-abbrev-table :regexp (rx
-												 (or line-start string-start (any " ("))
-												 (group
-												  (one-or-more (any "a-zA-Z0-9-_")))))
-
-
-;; Misc
-(defun misc ()
-  (setq abbrev-mode t)
-  (setq save-abbrevs nil)
-  (setq indent-tabs-mode nil)
-  (setq tab-width 4)
-  (setq tab-stop-list (number-sequence 0 200 4))
-  (linum-mode))
-
-
-
-;; Synthesis
-
-(define-derived-mode abl-mode
-  fundamental-mode "ABL"
-  "Major mode for editing ABL"
-  (misc))
-
-(provide 'abl-mode)
-
-
-;; ===TODO:===
-;;  * syntax highlighting!!!
-;;  * better keyword syntax handling
-;;  * indentation for assign statements and param lists (
-;;  * comment syntax?
