@@ -11,7 +11,7 @@
   prog-mode "ABL"
   "Major mode for editing ABL"
   (setq font-lock-defaults '(abl-font-lock-defaults))
-  (setq indent-line-function 'abl-indent-line)
+;  (setq indent-line-function 'abl-indent-line)  ;this isn't ready
   (setq abbrev-mode t)
   (setq save-abbrevs nil)
   (setq indent-tabs-mode nil)
@@ -23,17 +23,20 @@
 
 ;; Kewords ============================================================
 (defvar abl-keyword-list
- '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "elseif" "endif"
-	"message" "absolute" "and" "or" "assign" "available" "beings" "recid"
-	"can-do" "can-find" "case" "when" "create" "day" "month" "year" "datetime"
-	"procedure" "function" "forward" "returns" "temp-table" "for" "each"
-	"delete" "in" "empty" "find" "handle" "first" "last" "length" "modulo" "not"
-	"now" "today" "output" "stream" "index" "rindex" "replace" "round" "string"
-	"rowid" "sqrt" "substring" "trim" "tran" "leave" "input" "output" "release"
-	"return" "num-entries" "subst" "no-undo" "disp" "with" "down" "frame"
-	"to" "param" "parameter" "entry" "put" "close" "run" "label" "no-box" "width"
-	"where" "no-lock" "skip" "column" "unformatted" "by" "buffer" "group"
-	"view-as" "alert-box" "field"))
+ '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "elseif"
+	"endif" "message" "absolute" "and" "or" "assign" "available"
+	"beings" "recid" "can-do" "can-find" "case" "when" "create" "day"
+	"month" "year" "datetime" "procedure" "function" "forward"
+	"returns" "temp-table" "for" "each" "delete" "in" "empty" "find"
+	"handle" "first" "last" "length" "modulo" "not" "now" "today"
+	"output" "stream" "index" "rindex" "replace" "round" "string"
+	"rowid" "sqrt" "substring" "trim" "tran" "leave" "input" "output"
+	"release" "return" "num-entries" "subst" "no-undo" "disp" "with"
+	"down" "frame" "to" "param" "parameter" "entry" "put" "close"
+	"run" "label" "no-box" "width" "where" "no-lock" "skip" "column"
+	"unformatted" "by" "buffer" "group" "view-as" "alert-box" "field"
+	"init" "query" "next" "no-error" "avail" "begins" "no-error"
+	"retry" "undo" "error-status" "file-info" "input-output" ))
 
 
 (defvar abl-type-list
