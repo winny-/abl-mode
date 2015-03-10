@@ -1,22 +1,21 @@
 ;; Kewords ============================================================
 (defvar abl-keyword-list
-  '("def" "define" "var" "variable" "char" "character" "int" "integer" "dec" "decimal"
-	"log" "logical" "as" "extent" "if" "then" "else" "end" "do" "elseif" "endif"
-	"message" "date" "absolute" "and" "or" "assign" "available" "beings" "recid"
+ '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "elseif" "endif"
+	"message" "absolute" "and" "or" "assign" "available" "beings" "recid"
 	"can-do" "can-find" "case" "when" "create" "day" "month" "year" "datetime"
 	"procedure" "function" "forward" "returns" "temp-table" "for" "each"
 	"delete" "in" "empty" "find" "handle" "first" "last" "length" "modulo" "not"
 	"now" "today" "output" "stream" "index" "rindex" "replace" "round" "string"
-	"rowid" "sqrt" "substring" "trim" "tran" "leave" "input" "output"
-	"return" "num-entries" "subst" "no-undo" "disp" "format" "with" "down" "frame"
+	"rowid" "sqrt" "substring" "trim" "tran" "leave" "input" "output" "release"
+	"return" "num-entries" "subst" "no-undo" "disp" "with" "down" "frame"
 	"to" "param" "parameter" "entry" "put" "close" "run" "label" "no-box" "width"
-	"where" "no-lock" "skip" "column"
-	"find first"
-	"group by"))
+	"where" "no-lock" "skip" "column" "unformatted" "by" "buffer" "group"
+	"view-as" "alert-box" "field"))
+
 
 (defvar abl-type-list
   '("char" "character" "int" "integer" "format" "var" "variable" "log" "logical"
-	"date" "dec" "decimal"))
+	"yes" "no" "true" "false" "date" "dec" "decimal"))
 
 ;; Init ============================================================
 (defvar abl-mode-hook nil)
@@ -31,7 +30,7 @@
 
 ;;Highlighting ==================================================
 (defvar abl-keyword-regexp
-  (regexp-opt (mapcar 'upcase abl-keyword-list) 'words))
+  (regexp-opt (mapcar 'upcase (append abl-keyword-list abl-type-list)) 'words))
 
 (defvar abl-string-regexp
   (rx (and "\""
@@ -50,16 +49,6 @@
 	(,abl-comment-regexp . (1 font-lock-comment-face))
 	(,abl-string-regexp . (1 font-lock-string-face))))
 
-
-
-
-  
-
-;;TODO: vars? types?
-
-
-
-
 ;;Syntax====================================
 (defvar abl-mode-syntax-table
   (let ((st (make-syntax-table)))
@@ -77,12 +66,20 @@
 ;; Auto-Capitalization
 (define-abbrev-table 'abl-mode-abbrev-table
   (mapcar #'(lambda (v) (list v (upcase v) nil 1))
-		  abl-keyword-list))
+		  (append abl-keyword-list abl-type-list)))
 
-(abbrev-table-put abl-mode-abbrev-table :regexp (rx
-												 (or line-start string-start (any " ("))
-												 (group
-												  (one-or-more (any "a-zA-Z0-9-_")))))
+(defvar abl-abbrev-word-regexp
+  (rx
+   (or line-start string-start (any " ("))
+   (group
+	(one-or-more (any "a-zA-Z0-9-_"))
+	(zero-or-more (any "-_")))))
+
+
+
+(abbrev-table-put abl-mode-abbrev-table
+				  :regexp abl-abbrev-word-regexp)
+
 
 
 
