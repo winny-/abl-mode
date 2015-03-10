@@ -1,3 +1,26 @@
+;; ABL-Mode
+;;
+;; An emacs major mode for editing Progress/ABL files.
+;;
+;; Copyright Nat Egan-Pimblett 2015
+;; nathaniel.ep@gmail.com
+;;
+;; Provided under the MIT License
+
+(define-derived-mode abl-mode
+  prog-mode "ABL"
+  "Major mode for editing ABL"
+  (setq font-lock-defaults '(abl-font-lock-defaults))
+  (setq indent-line-function 'abl-indent-line)
+  (setq abbrev-mode t)
+  (setq save-abbrevs nil)
+  (setq indent-tabs-mode nil)
+  (setq tab-width 4)
+  (setq tab-stop-list (number-sequence 0 200 4))
+  (linum-mode))
+
+
+
 ;; Kewords ============================================================
 (defvar abl-keyword-list
  '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "elseif" "endif"
@@ -29,6 +52,7 @@
 
 
 ;;Highlighting ==================================================
+;;TODO: vars? types?
 (defvar abl-keyword-regexp
   (regexp-opt (mapcar 'upcase (append abl-keyword-list abl-type-list)) 'words))
 
@@ -50,6 +74,7 @@
 	(,abl-string-regexp . (1 font-lock-string-face))))
 
 ;;Syntax====================================
+;;TODO comment syntax
 (defvar abl-mode-syntax-table
   (let ((st (make-syntax-table)))
 	(modify-syntax-entry ?- "w" st) ;- and _ can be in words
@@ -57,13 +82,7 @@
 	st))
 						 
 
-
-
-
-
-		  
-	 
-;; Auto-Capitalization
+;; Auto-Capitalization ======================
 (define-abbrev-table 'abl-mode-abbrev-table
   (mapcar #'(lambda (v) (list v (upcase v) nil 1))
 		  (append abl-keyword-list abl-type-list)))
@@ -83,17 +102,151 @@
 
 
 
+
+
+;;Indentation =================================================
+;; Indentation Rule:
+;; * first line is 0
+;; * don't look at blank lines
+;; * lines ending in : indent
+;; * end. lines unindent
+
+
+;;-- helpers
+(defmacro on-prev-line (&rest p)
+  `(save-excursion
+	   ,(append '(progn (forward-line -1)) p)))
+
+(defun seek-prev (rexp)
+  (save-excursion
+    (forward-line -1)
+    (cond
+     ((bobp) nil)
+     ((looking-at "^[ \t]*$")
+      (seek-prev rexp))
+     (t
+      (looking-at rexp)))))
+
+(defun seek-pprev (rexp)
+  (save-excursion
+    (cond
+     ((bobp) nil)
+     ((looking-at "^[ \t]*$")
+      (seek-prev rexp))
+     (t
+      (looking-at rexp)))))
+
+(defun prev-line-indentation ()
+  (save-excursion
+    (search-backward-regexp (rx
+                             (not (any whitespace))))
+    (current-indentation)))
+
+;;-- diagnostics
+(defun prev-blank-p ()
+  (seek-prev "^[ \\t]*$"))
+
+(defun prev-ends-blankish-p ()
+  (not (seek-prev ".*[\\.,][ \t]*$")))
+
+(defun prev-ends-dottish-p ()
+  (seek-prev ".*\\.[ \t]*$"))
+
+
+
+(defun prev-begins-block-p ()
+  (let ((begin-block-regexp ".*[ \t]*:[ \t]*$"))
+    (seek-prev begin-block-regexp)))
+
+(defun line-ends-block-p ()
+  (save-excursion
+    (beginning-of-line)
+    (looking-at " *END[\t *]*\\.[\t *]*$")))
+
+;;-- handlers
+(defun get-ind-after-blankish-ending ()
+  (interactive)
+  (save-excursion
+    (forward-line -1)
+    (cond
+     ((or (prev-ends-dottish-p) (prev-begins-block-p))
+      (if (on-prev-line (looking-at "^[ \t]*("))
+          ;; special treatment for multi-line paren statemetns
+          (+ (current-indentation) tab-width 1) 
+        (+ (current-indentation) tab-width)))
+     (t
+      (current-indentation)))))
+
+(defun get-ind-after-dottish-ending ()
+  (interactive)
+  (save-excursion
+    (let (done ind)
+      (while (not done)
+        (forward-line -1)
+        (cond
+         ((looking-at ""))
+         ;;Previous normal statement or end of a (,) group
+         ((or (prev-ends-dottish-p) (prev-begins-block-p)) 
+          (current-indentation))
+         ;;
+         (t
+          (- (current-indentation) tab-width)))))))
+
+(defun get-ind-after-begin-block ()
+  (save-excursion
+    (search-backward-regexp ":[ \t]*$")
+    (if (prev-ends-dottish-p)
+        (+ (current-indentation) tab-width)
+      (progn
+        (let (done ind)
+          (while (not done)
+            (forward-line -1)
+            (cond
+             ((bobp)
+              (setq done t)
+              (setq ind tab-width))
+             ((prev-ends-dottish-p)
+              (setq done t)
+              (setq ind (+ (current-indentation) tab-width)))))
+          ind)))))
+
+
+;;-- synthesis
+(defun abl-indent-line ()
+  ;; Decide what indentation should be
+  (let (ind)
+    (cond
+     ;;Beginning of buffer starts un-indented
+     ((bobp)
+      (setq ind 0))
+     ;;END. statements unindent the next line
+     ((line-ends-block-p)
+      (setq ind (- (prev-line-indentation) tab-width)))
+     ;;Ending in ":" indents the next line
+     ((prev-begins-block-p )
+      (setq ind (get-ind-after-begin-block)))
+     ;;Ignore blank lines
+     ((prev-blank-p)
+      (setq ind (on-prev-line (abl-indent-line))))
+     ((prev-ends-blankish-p)
+      (setq ind (get-ind-after-blankish-ending)))
+     ((prev-ends-dottish-p)
+      (setq ind (get-ind-after-dottish-ending)))
+     ;;Otherwise, just guess that it's the same as the previous
+     (t
+      (setq ind (prev-line-indentation))))
+    ;; Set indentation
+    (if (> ind 0)
+        (indent-line-to ind)
+      (indent-line-to 0))
+    ;; And, so that we can call recursively, return
+    ind))
+
+
+
+
+
 ;; Synthesis
-(define-derived-mode abl-mode
-  fundamental-mode "ABL"
-  "Major mode for editing ABL"
-  (setq font-lock-defaults '(abl-font-lock-defaults))
-  (setq abbrev-mode t)
-  (setq save-abbrevs nil)
-  (setq indent-tabs-mode nil)
-  (setq tab-width 4)
-  (setq tab-stop-list (number-sequence 0 200 4))
-  (linum-mode))
 
 
 (provide 'abl-mode)
@@ -106,7 +259,7 @@
 ;;  * comment syntax?
 
 
-;; Functions!
+;; Functions ================================================================
 
 (defun abl-assign-insert-tablename (tbl)
   (interactive "sTable name: ")
@@ -119,72 +272,5 @@
 	  (if (looking-at ".*\\.[\t ]*$")
 		  (setq done t)
 		(forward-line 1)))))
-
-
-
-;;Indentation =================================================
-;; Indentation Rule:
-;;  0) Don't look at blank lines
-;;  1) If we're at the beginning of the file, indent to 0.
-;;  2) If the previous line ends in ":" (block defn) increase indentation.
-;;  3) If **this** line is an "END." decrease indentation
-;;  N) Otherwise stay const
-
-(defun peek-prev (rexp)
-  (save-excursion
-	(progn
-	  (forward-line -1)
-	  (looking-at rexp))))
-
-(defun prev-blank-p ()
-  (peek-prev "^[ \\t]*$"))
-
-(defun prev-dot-p ()
-  (peek-prev ".*\\.[ \\t]*$"))
-
-(defun prev-block-p ()
-  (peek-prev ".*\\:[ \\t]*$"))
-
-(defun indent-for-block ()
-  (cond
-   ((prev-blank-p)
-	(+ (current-indentation) default-shift-width))
-   ((prev-dot-p)
-	(+ (current-indentation) default-shift-width))
-   (t ; probably a multi-line block indent
-	(current-indentation))))
-
-
-(defmacro on-prev-line (&rest p)
-  `(save-excursion
-	   ,(append '(progn (forward-line -1)) p)))
-
-;; (defun abl-indent-line ()
-;;   (let (ind)
-;; 	(cond
-;; 	 ;;Rule 1
-;; 	 ((bobp)
-;; 	  (setq ind 0))
-;; 	 ;; Don't count whitespace
-;; 	 ((prev-blank-p)
-;; 	  (on-prev-line
-;; 	   (setq ind (abl-indent-line))))
-;; 	 ;;Rule 2
-;; 	 ((prev-block-p)
-;; 	  (on-prev-line
-;; 	   (setq ind (indent-for-block))))
-;; 	 ;;Rule 3
-;; 	 ((looking-at ".*END\\.[ \\t]$")
-;; 	  (on-prev-line
-;; 	   (setq (- (current-indentation) default-shift-width))))
-;; 	 ;;Rule N
-;; 	 (t
-;; 	  (on-prev-line
-;; 	   (setq ind (current-indentation)))))
-;; 	(if ind
-;; 		(if (> ind 0)
-;; 			(indent-line-to ind)
-;; 		  (indent-line-to 0)))
-;; 	ind))
 
 
