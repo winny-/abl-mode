@@ -13,6 +13,7 @@
   (setq font-lock-defaults '(abl-font-lock-defaults))
 ;  (setq indent-line-function 'abl-indent-line)  ;this isn't ready
   (setq abbrev-mode t)
+  (set-syntax-table abl-syntax-table)
   (setq save-abbrevs nil)
   (setq indent-tabs-mode nil)
   (setq tab-width 4)
@@ -62,7 +63,7 @@
 (defvar abl-string-regexp
   (rx (and "\""
 		   (zero-or-more
-			(or (not (any "\\\""))
+			(or (not (any "~\""))
 				"\n"))
 		   "\""))
   "Regexp which matches a string")
@@ -73,15 +74,18 @@
 
 (defvar abl-font-lock-defaults
   `((,abl-keyword-regexp . (1 font-lock-builtin-face))
-	(,abl-comment-regexp . (1 font-lock-comment-face))
+;	(,abl-comment-regexp . (1 font-lock-comment-face))
 	(,abl-string-regexp . (1 font-lock-string-face))))
 
 ;;Syntax====================================
 ;;TODO comment syntax
-(defvar abl-mode-syntax-table
+(defvar abl-syntax-table
   (let ((st (make-syntax-table)))
 	(modify-syntax-entry ?- "w" st) ;- and _ can be in words
 	(modify-syntax-entry ?_ "w" st)
+	(modify-syntax-entry ?/ "<>14" st)
+	(modify-syntax-entry ?* "<>23" st)
+	(modify-syntax-entry ?~ "\\" st)
 	st))
 						 
 
@@ -90,9 +94,34 @@
   (mapcar #'(lambda (v) (list v (upcase v) nil 1))
 		  (append abl-keyword-list abl-type-list)))
 
+(defun abl-in-comment-p ()
+  (let ((open (save-excursion
+				(search-backward "/*" 0 t)))
+		(close (save-excursion
+				 (search-backward "*/" 0 t))))
+	(cond
+	 ((null open)
+	  nil)
+	 ((and (null close) open)
+	  t)
+	 (t
+	  (> open close)))))
+
+(defun abl-in-string-p ()
+  (let* ((beg (save-excursion
+				(beginning-of-line)
+				(point)))
+		 (l (parse-partial-sexp beg (point))))
+	(nth 3 l)))
+
+(defun abl-in-code-context-p ()
+  (and (not (abl-in-comment-p))
+	   (not (abl-in-string-p))))
+  
+
 (defvar abl-abbrev-word-regexp
   (rx
-   (or line-start string-start (any " ("))
+   (or line-start string-start (any " (:"))
    (group
 	(one-or-more (any "a-zA-Z0-9-_"))
 	(zero-or-more (any "-_")))))
