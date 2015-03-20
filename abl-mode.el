@@ -12,13 +12,16 @@
   "Major mode for editing ABL"
   (setq font-lock-defaults '(abl-font-lock-defaults))
 ;  (setq indent-line-function 'abl-indent-line)  ;this isn't ready
+  (use-local-map abl-mode-map)
   (setq abbrev-mode t)
   (set-syntax-table abl-syntax-table)
   (setq save-abbrevs nil)
   (setq indent-tabs-mode nil)
   (setq tab-width 4)
   (setq tab-stop-list (number-sequence 0 200 4))
-  (linum-mode))
+  (setq comment-start "/*")
+  (setq comment-end "*/"))
+
 
 
 
@@ -49,6 +52,7 @@
 
 (defvar abl-mode-map
   (let ((map (make-keymap)))
+	(define-key map "<backtab>" 'abl-backtab)
     ;;Define mode-specific keybindings here
     map))
 
@@ -83,8 +87,8 @@
   (let ((st (make-syntax-table)))
 	(modify-syntax-entry ?- "w" st) ;- and _ can be in words
 	(modify-syntax-entry ?_ "w" st)
-	(modify-syntax-entry ?/ "<>14" st)
-	(modify-syntax-entry ?* "<>23" st)
+	(modify-syntax-entry ?/ ". 14" st)
+	(modify-syntax-entry ?* ". 23" st)
 	(modify-syntax-entry ?~ "\\" st)
 	st))
 						 
@@ -297,12 +301,20 @@
   (interactive "sTable name: ")
   (let (done)
 	(while (not done)
-	  (beginning-of-line)
-	  (forward-word)
-	  (backward-word)
-	  (insert tbl ".")
-	  (if (looking-at ".*\\.[\t ]*$")
-		  (setq done t)
-		(forward-line 1)))))
+	  (if (looking-at "^[ \t]*$")
+		  (forward-line 1)
+		(progn
+		  (beginning-of-line)
+		  (forward-word)
+		  (backward-word)
+		  (insert tbl ".")
+		  (if (looking-at ".*\\.[\t ]*$")
+			  (setq done t)
+			(forward-line 1)))))))
 
+(defun abl-backtab ()
+  (save-excursion
+	(beginning-of-line)
+	(when (looking-at "    ")
+	  (replace-match))))
 
