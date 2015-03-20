@@ -13,6 +13,11 @@
   (setq font-lock-defaults '(abl-font-lock-defaults))
 ;  (setq indent-line-function 'abl-indent-line)  ;this isn't ready
   (use-local-map abl-mode-map)
+  (if 1
+	  (progn
+		(make-local-variable 'pre-abbrev-expand-hook)
+		(add-hook 'pre-abbrev-expand-hook 'abl-pre-abbrev-expand-hook)
+		(abbrev-mode 1)))
   (setq abbrev-mode t)
   (set-syntax-table abl-syntax-table)
   (setq save-abbrevs nil)
@@ -21,7 +26,6 @@
   (setq tab-stop-list (number-sequence 0 200 4))
   (setq comment-start "/*")
   (setq comment-end "*/"))
-
 
 
 
@@ -40,7 +44,8 @@
 	"run" "label" "no-box" "width" "where" "no-lock" "skip" "column"
 	"unformatted" "by" "buffer" "group" "view-as" "alert-box" "field"
 	"init" "query" "next" "no-error" "avail" "begins" "no-error"
-	"retry" "undo" "error-status" "file-info" "input-output" ))
+	"retry" "undo" "error-status" "file-info" "input-output" "buffer-copy"
+	"decimals" "table" "otherwise" "truncate"))
 
 
 (defvar abl-type-list
@@ -94,10 +99,22 @@
 						 
 
 ;; Auto-Capitalization ======================
+;; -- ABL Keywords & word definition (so we don't have KEYWORD_restoftoken)
+(defvar abl-abbrev-word-regexp 
+  (rx
+   (or line-start string-start (any " (:"))
+   (group
+	(one-or-more (any "a-zA-Z0-9-_"))
+	(zero-or-more (any "-_")))))
+
 (define-abbrev-table 'abl-mode-abbrev-table
   (mapcar #'(lambda (v) (list v (upcase v) nil 1))
 		  (append abl-keyword-list abl-type-list)))
 
+(abbrev-table-put abl-mode-abbrev-table
+				  :regexp abl-abbrev-word-regexp)
+
+;; -- code context callback
 (defun abl-in-comment-p ()
   (let ((open (save-excursion
 				(search-backward "/*" 0 t)))
@@ -122,18 +139,12 @@
   (and (not (abl-in-comment-p))
 	   (not (abl-in-string-p))))
   
-
-(defvar abl-abbrev-word-regexp
-  (rx
-   (or line-start string-start (any " (:"))
-   (group
-	(one-or-more (any "a-zA-Z0-9-_"))
-	(zero-or-more (any "-_")))))
+(defun abl-pre-abbrev-expand-hook ()
+  (setq local-abbrev-table
+		(if (abl-in-code-context-p)
+			abl-mode-abbrev-table)))
 
 
-
-(abbrev-table-put abl-mode-abbrev-table
-				  :regexp abl-abbrev-word-regexp)
 
 
 
