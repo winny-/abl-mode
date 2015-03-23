@@ -45,7 +45,8 @@
 	"unformatted" "by" "buffer" "group" "view-as" "alert-box" "field"
 	"init" "query" "next" "no-error" "avail" "begins" "no-error"
 	"retry" "undo" "error-status" "file-info" "input-output" "buffer-copy"
-	"decimals" "table" "otherwise" "truncate"))
+	"decimals" "table" "otherwise" "truncate" "ambiguous" "browse" "pause"
+	"before-hide" "value" "export" "import" "from" "repeat" "like"))
 
 
 (defvar abl-type-list
