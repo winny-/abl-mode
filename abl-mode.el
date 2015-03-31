@@ -43,10 +43,12 @@
 	"down" "frame" "to" "param" "parameter" "entry" "put" "close"
 	"run" "label" "no-box" "width" "where" "no-lock" "skip" "column"
 	"unformatted" "by" "buffer" "group" "view-as" "alert-box" "field"
-	"init" "query" "next" "no-error" "avail" "begins" "no-error"
+	"init" "query" "next" "on-error" "avail" "begins" "no-error"
 	"retry" "undo" "error-status" "file-info" "input-output" "buffer-copy"
 	"decimals" "table" "otherwise" "truncate" "ambiguous" "browse" "pause"
-	"before-hide" "value" "export" "import" "from" "repeat" "like"))
+	"before-hide" "value" "export" "import" "from" "repeat" "like"
+	"to-rowid" "substr" "unique" "primary" "overlay" "return-value"
+	"on" "error" "min" "max" "buffer-value" "stop" "transaction" "is"))
 
 
 (defvar abl-type-list
@@ -93,8 +95,8 @@
   (let ((st (make-syntax-table)))
 	(modify-syntax-entry ?- "w" st) ;- and _ can be in words
 	(modify-syntax-entry ?_ "w" st)
-	(modify-syntax-entry ?/ ". 14" st)
-	(modify-syntax-entry ?* ". 23" st)
+	(modify-syntax-entry ?/ ". 14n" st)
+	(modify-syntax-entry ?* ". 23n" st)
 	(modify-syntax-entry ?~ "\\" st)
 	st))
 						 
