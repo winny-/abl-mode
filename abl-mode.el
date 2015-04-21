@@ -31,9 +31,9 @@
 
 ;; Kewords ============================================================
 (defvar abl-keyword-list
- '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "elseif"
+  '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "elseif"
 	"endif" "message" "absolute" "and" "or" "assign" "available"
-	"beings" "recid" "can-do" "can-find" "case" "when" "create" "day"
+	"recid" "can-do" "can-find" "case" "when" "create" "day"
 	"month" "year" "datetime" "procedure" "function" "forward"
 	"returns" "temp-table" "for" "each" "delete" "in" "empty" "find"
 	"handle" "first" "last" "length" "modulo" "not" "now" "today"
@@ -48,7 +48,12 @@
 	"decimals" "table" "otherwise" "truncate" "ambiguous" "browse" "pause"
 	"before-hide" "value" "export" "import" "from" "repeat" "like"
 	"to-rowid" "substr" "unique" "primary" "overlay" "return-value"
-	"on" "error" "min" "max" "buffer-value" "stop" "transaction" "is"))
+	"on" "error" "min" "max" "buffer-value" "stop" "transaction" "is"
+	"form" "stream-io" "column-label" "bind" "by-reference" "reference-only"
+	"append" "using" "exclusive-lock" "chr" "terminal" "next-value"
+	"current-value" "valid-handle" "valid-handle" "lastkey" "row"
+	"buffer-field" "update" "upper" "lower" "throw" "catch" "centered"
+	"help" "side-labels" "title" "prompt" "center"))
 
 
 (defvar abl-type-list
@@ -98,6 +103,7 @@
 	(modify-syntax-entry ?/ ". 14n" st)
 	(modify-syntax-entry ?* ". 23n" st)
 	(modify-syntax-entry ?~ "\\" st)
+	(modify-syntax-entry ?= "w" st) ; = can be a word (For navigation)
 	st))
 						 
 
