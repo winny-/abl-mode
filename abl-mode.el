@@ -6,34 +6,20 @@
 ;; nathaniel.ep@gmail.com
 ;;
 ;; Provided under the MIT License
-
-(define-derived-mode abl-mode
-  prog-mode "ABL"
-  "Major mode for editing ABL"
-  (setq font-lock-defaults '(abl-font-lock-defaults))
-;  (setq indent-line-function 'abl-indent-line)  ;this isn't ready
-  (use-local-map abl-mode-map)
-  (if 1
-	  (progn
-		(make-local-variable 'pre-abbrev-expand-hook)
-		(add-hook 'pre-abbrev-expand-hook 'abl-pre-abbrev-expand-hook)
-		(abbrev-mode 1)))
-  (setq abbrev-mode t)
-  (set-syntax-table abl-syntax-table)
-  (setq save-abbrevs nil)
-  (setq indent-tabs-mode nil)
-  (setq tab-width 4)
-  (setq tab-stop-list (number-sequence 0 200 4))
-  (setq comment-start "/*")
-  (setq comment-end "*/"))
-
+;;
+;; ===TODO:===
+;;  * better keyword syntax handling (always)
+;;  * indentation for assign statements and param lists
+;;  * backtab on region
+;;  * navigation (stmt, block, on M - up, M - down)
+;;  * preproc directive / include file syntax (how do I even . . . )
 
 
 ;; Kewords ============================================================
 (defvar abl-keyword-list
   '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "elseif"
 	"endif" "message" "absolute" "and" "or" "assign" "available"
-	"recid" "can-do" "can-find" "case" "when" "create" "day"
+	"recid" "can-do" "can-find" "case" "when" "create" "day" "class"
 	"month" "year" "datetime" "procedure" "function" "forward"
 	"returns" "temp-table" "for" "each" "delete" "in" "empty" "find"
 	"handle" "first" "last" "length" "modulo" "not" "now" "today"
@@ -53,8 +39,17 @@
 	"append" "using" "exclusive-lock" "chr" "terminal" "next-value"
 	"current-value" "valid-handle" "valid-handle" "lastkey" "row"
 	"buffer-field" "update" "upper" "lower" "throw" "catch" "centered"
-	"help" "side-labels" "title" "prompt" "center"))
-
+	"help" "side-labels" "title" "prompt" "center" "scrolling" "hide" "clear"
+	"all" "choose" "no-pause" "page-up" "page-down" "home" "go-on" "color"
+	"cursor-left" "cursor-right" "cursor-up" "cursor-down" "normal"
+	"next-prompt" "prev" "frame-line" "while" "except" "keyfunc" "random"
+	"handle-type" "no-label" "page-number" "if-first" "if-last" "delimiter"
+	"search" "time" "r-index" "etime" "persistent set" "table-handle" "of"
+	"buffer-create" "default-buffer-handle" "finally" "prepare-temp-table"
+	"lookup" "add-new-index" "add-new-field" "break by" "question" "yes-no"
+	"yes-no-cancel" "buttons" "quoter" "query-prepare" "query-open" "set-buffers"
+	"view" "object" "this-procedure" "persistent" "through" "set" "descending"
+	"os-dir" "case-sensitive" "first-of" "last-of" "colon" "os-command" "silent"))
 
 (defvar abl-type-list
   '("char" "character" "int" "integer" "format" "var" "variable" "log" "logical"
@@ -64,38 +59,39 @@
 (defvar abl-mode-hook nil)
 
 (defvar abl-mode-map
-  (let ((map (make-keymap)))
-	(define-key map "<backtab>" 'abl-backtab)
-    ;;Define mode-specific keybindings here
+  (let ((map (make-sparse-keymap)))
+	(define-key map (kbd "<backtab>") 'abl-backtab)
+	(define-key map (kbd "C-x n p") 'abl-narrow-to-proc)
+	(define-key map (kbd "<M-up>") 'abl-backward-proc)
+	(define-key map (kbd "<M-down>") 'abl-forward-proc)
+	(define-key map (kbd "C-x v p") 'abl-occur-procs)
     map))
+
+
 
 (add-to-list 'auto-mode-alist '("\\.p\\'" . abl-mode))
 
 
 ;;Highlighting ==================================================
-;;TODO: vars? types?
 (defvar abl-keyword-regexp
-  (regexp-opt (mapcar 'upcase (append abl-keyword-list abl-type-list)) 'words))
+  (regexp-opt (mapcar 'upcase abl-keyword-list) 'words))
 
 (defvar abl-string-regexp
   (rx (and "\""
 		   (zero-or-more
 			(or (not (any "~\""))
 				"\n"))
-		   "\""))
-  "Regexp which matches a string")
+		   "\"")))
 
-(defvar abl-comment-regexp
-  "\\(/\\*.*\\*/\\)"
-  "Regexp which matches an ABL comment")
+(defvar abl-type-regexp
+  (regexp-opt (mapcar 'upcase abl-type-list) 'words))
 
 (defvar abl-font-lock-defaults
   `((,abl-keyword-regexp . (1 font-lock-builtin-face))
-;	(,abl-comment-regexp . (1 font-lock-comment-face))
+	(,abl-type-regexp . (1 font-lock-type-face))
 	(,abl-string-regexp . (1 font-lock-string-face))))
 
 ;;Syntax====================================
-;;TODO comment syntax
 (defvar abl-syntax-table
   (let ((st (make-syntax-table)))
 	(modify-syntax-entry ?- "w" st) ;- and _ can be in words
@@ -109,7 +105,7 @@
 
 ;; Auto-Capitalization ======================
 ;; -- ABL Keywords & word definition (so we don't have KEYWORD_restoftoken)
-(defvar abl-abbrev-word-regexp 
+(defvar abl-abbrev-word-regexp
   (rx
    (or line-start string-start (any " (:"))
    (group
@@ -122,6 +118,12 @@
 
 (abbrev-table-put abl-mode-abbrev-table
 				  :regexp abl-abbrev-word-regexp)
+
+(defun abl-pre-abbrev-expand-hook ()
+  (setq local-abbrev-table
+		(if (abl-in-code-context-p)
+			abl-mode-abbrev-table)))
+
 
 ;; -- code context callback
 (defun abl-in-comment-p ()
@@ -148,25 +150,22 @@
   (and (not (abl-in-comment-p))
 	   (not (abl-in-string-p))))
   
-(defun abl-pre-abbrev-expand-hook ()
-  (setq local-abbrev-table
-		(if (abl-in-code-context-p)
-			abl-mode-abbrev-table)))
 
 
 
 
 
 
-
+;; *****************************************************************************
+;; NB: THIS SECTION DOESN'T WORK YET (it's here for reference 
 
 ;;Indentation =================================================
+
 ;; Indentation Rule:
 ;; * first line is 0
 ;; * don't look at blank lines
 ;; * lines ending in : indent
 ;; * end. lines unindent
-
 
 ;;-- helpers
 (defmacro on-prev-line (&rest p)
@@ -297,25 +296,11 @@
       (indent-line-to 0))
     ;; And, so that we can call recursively, return
     ind))
+;; *****************************************************************************
+;; Okay, back to things that work
 
 
-
-
-
-;; Synthesis
-
-
-(provide 'abl-mode)
-
-
-;; ===TODO:===
-;;  * syntax highlighting!!!
-;;  * better keyword syntax handling
-;;  * indentation for assign statements and param lists (
-;;  * comment syntax?
-
-
-;; Functions ================================================================
+;; Text Modification =========================================================
 
 (defun abl-assign-insert-tablename (tbl)
   (interactive "sTable name: ")
@@ -332,9 +317,89 @@
 			  (setq done t)
 			(forward-line 1)))))))
 
+
+;; Reading & Navigation Code =========================================================
+(defun abl-narrow-to-proc ()
+  (interactive)
+  (let (b e)
+	(save-excursion
+	  (search-backward-regexp (rx line-start (or "FUNCTION" "PROCEDURE")))
+	  (setq b (point))
+	  (search-forward-regexp (rx line-start "END"))
+	  (end-of-line)
+	  (setq e (point)))
+	(narrow-to-region b e)))
+
+(defun abl-occur-procs ()
+  (interactive)
+  (occur (rx line-start (or "FUNCTION" "PROC"))))
+
+(defun abl-forward-proc ()
+  (interactive)
+  (right-char)
+  (search-forward-regexp (rx line-start (or "FUNCTION" "PROCEDURE")))
+  (beginning-of-line))
+
+(defun abl-backward-proc ()
+  (interactive)
+  (search-backward-regexp (rx line-start (or "FUNCTION" "PROCEDURE")))
+  (beginning-of-line))
+
 (defun abl-backtab ()
+  (interactive)
   (save-excursion
 	(beginning-of-line)
 	(when (looking-at "    ")
-	  (replace-match))))
+	  (replace-match ""))))
 
+
+;; Skeletons =========================================================
+
+(define-skeleton abl-skel-create
+  "Insert a buffer creation, assignment, user tracking, and release."
+  nil
+  '(setq v1 (skeleton-read "Buffer: "))
+  "CREATE " v1 "." \n
+  "ASSIGN " \n "    "
+  ("Field: "  v1 "." str '(tab-to-tab-stop) "= " (skeleton-read "Value: ") & \n)
+  (save-excursion
+	(forward-line -1)
+	(end-of-line)
+	(insert ".")
+	(forward-line))
+  > -5
+  "{gnpr/gnlastx.i &file=" v1 "}" \n ;; br specific nonsense
+  "RELEASE " v1 ".\n" > -)
+
+(define-skeleton abl-skel-test
+  "Insert the beginning of a test procedure."
+  nil
+  "PROCEDURE test_" (skeleton-read "Name:") \n
+  "    DEF OUTPUT PARAM p_pass     AS LOG  NO-UNDO." \n
+  "DEF OUTPUT PARAM p_msg      AS CHAR NO-UNDO." \n
+  - \n "END.\n")
+
+
+
+;; Synthesis =========================================================
+(define-derived-mode abl-mode
+  prog-mode "ABL"
+  "Major mode for editing ABL"
+  (set (make-local-variable 'font-lock-defaults) '(abl-font-lock-defaults))
+;  (setq indent-line-function 'abl-indent-line)  ;this isn't ready
+  (use-local-map abl-mode-map)
+  (if 1
+	  (progn
+		(make-local-variable 'pre-abbrev-expand-hook)
+		(add-hook 'pre-abbrev-expand-hook 'abl-pre-abbrev-expand-hook)
+		(abbrev-mode 1)))
+  (set (make-local-variable  'abbrev-mode) t)
+  (set-syntax-table abl-syntax-table)
+  (set (make-local-variable  'save-abbrevs) nil)
+  (set (make-local-variable 'indent-tabs-mode) nil)
+  (set (make-local-variable 'tab-width) 4)
+  (set (make-local-variable 'tab-stop-list) (number-sequence 0 200 4))
+  (set (make-local-variable 'comment-start) "/*")
+  (set (make-local-variable 'comment-end) "*/"))
+
+(provide 'abl-mode)
