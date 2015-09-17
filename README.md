@@ -1,16 +1,23 @@
 # abl-mode
-An Emacs major mode for editing Progress/ABL files.
+An Emacs major mode for editing Progress OpenEdge/Advanced Business Language files.
 
 #Installation
 
-For now you have to download it, put it in your `.emacs.d`, and put `(load-file "abl-mode.el")` in your `init.el` file.
+Download `abl-mode.el`, put it in your `~/.emacs.d/` directory (or somehwere on
+your Emacs load path), and add `(load-file "abl-mode.el")` to your
+`~/emacs.d/init.el` and you should open `*.p` files in ABL mode (or you can
+invoke it explicitly with `M-x abl-mode`).
+
 
 #Contributing
-If you'd like to improve abl-mode, you can
 
- * Use it.
- * Open [issues](https://github.com/neganp/abl-mode/issues) if you find bugs or want to suggest new features.
- * If you you know some ELisp, pull requests or feedback are welcome.
+Improve `abl-mode` by
+
+ * Using it (if you find yourself having to program in ABL)
+ * Open [issues](https://github.com/neganp/abl-mode/issues) if you find bugs or
+ want to suggest new features (better support for automatic indentation would
+ be great!).
+ * Open a pull request.
 
 
 #Roadmap
@@ -18,8 +25,11 @@ New features that might be developed are
 
  * Automatic indentation
  * Skeletons for common ABL boilerplate
- * Better integration with Emacs's Package system.
+ * Better integration with Emacs's Package system
 
+Copyright (C) 2015 by Nathaniel Knight.
 
-This software is Copyright 2015 by Nathaniel Egan-Pimblett. 
-Provided under the terms of the [MIT License](http://en.wikipedia.org/wiki/MIT_License).
+Provided under the [MIT License](http://en.wikipedia.org/wiki/MIT_License).
+
+See `license.txt` for copying permissions.
+
