@@ -1,21 +1,24 @@
-;; ABL-Mode
-;;
-;; An emacs major mode for editing Progress/ABL files.
-;;
-;; Copyright Nat Egan-Pimblett 2015
-;; nathaniel.ep@gmail.com
-;;
-;; Provided under the MIT License
-;;
-;; ===TODO:===
-;;  * better keyword syntax handling (always)
-;;  * indentation for assign statements and param lists
-;;  * backtab on region
-;;  * navigation (stmt, block, on M - up, M - down)
-;;  * preproc directive / include file syntax (how do I even . . . )
+;;;; abl-mode.el --- Major mode for editing Progress OpenEdge/ABL
 
+;; Copyright (C) 2015 Nathaniel Knight
 
-;; Kewords ============================================================
+;; Author: Nathaniel Knight <nathaniel.ep@gmail.com>
+;; Created: March 3rd, 2015
+;; Keywords: languages
+
+;; This file is not part of GNU Emacs.
+
+;; See the file license.txt for copying permissions.
+
+;;;;  Commentary:
+;; The mode provided by this file provides syntax highlighting and auto-
+;; capitalization for the Progress Advanced Business Language (ABL), as
+;; well as some basic navigation functions.
+
+;;;; Code:
+
+;;;; Initializations
+
 (defvar abl-keyword-list
   '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "elseif"
 	"endif" "message" "absolute" "and" "or" "assign" "available"
@@ -55,7 +58,6 @@
   '("char" "character" "int" "integer" "format" "var" "variable" "log" "logical"
 	"yes" "no" "true" "false" "date" "dec" "decimal"))
 
-;; Init ============================================================
 (defvar abl-mode-hook nil)
 
 (defvar abl-mode-map
@@ -69,10 +71,8 @@
 
 
 
-(add-to-list 'auto-mode-alist '("\\.p\\'" . abl-mode))
 
-
-;;Highlighting ==================================================
+;;;; Highlighting
 (defvar abl-keyword-regexp
   (regexp-opt (mapcar 'upcase abl-keyword-list) 'words))
 
@@ -91,7 +91,9 @@
 	(,abl-type-regexp . (1 font-lock-type-face))
 	(,abl-string-regexp . (1 font-lock-string-face))))
 
-;;Syntax====================================
+
+;;;; Syntax
+
 (defvar abl-syntax-table
   (let ((st (make-syntax-table)))
 	(modify-syntax-entry ?- "w" st) ;- and _ can be in words
@@ -103,9 +105,8 @@
 	st))
 						 
 
-;; Auto-Capitalization ======================
-;; -- ABL Keywords & word definition (so we don't have KEYWORD_restoftoken)
-(defvar abl-abbrev-word-regexp
+;;;; Auto-Capitalization
+(defvar abl-abbrev-word-regexp  ;; regexp which triggers abbrev expansion
   (rx
    (or line-start string-start (any " (:"))
    (group
@@ -125,8 +126,9 @@
 			abl-mode-abbrev-table)))
 
 
-;; -- code context callback
+;; Code Context callback
 (defun abl-in-comment-p ()
+  "Return t if point is not in a comment or a string."
   (let ((open (save-excursion
 				(search-backward "/*" 0 t)))
 		(close (save-excursion
@@ -151,15 +153,10 @@
 	   (not (abl-in-string-p))))
   
 
-
-
-
-
-
 ;; *****************************************************************************
 ;; NB: THIS SECTION DOESN'T WORK YET (it's here for reference 
 
-;;Indentation =================================================
+;;;;Indentation
 
 ;; Indentation Rule:
 ;; * first line is 0
@@ -266,7 +263,7 @@
           ind)))))
 
 
-;;-- synthesis
+;; Synthesis
 (defun abl-indent-line ()
   ;; Decide what indentation should be
   (let (ind)
@@ -300,9 +297,11 @@
 ;; Okay, back to things that work
 
 
-;; Text Modification =========================================================
+;;;; Text Modification
 
 (defun abl-assign-insert-tablename (tbl)
+  "At the beginning of an assign statmenet, add a table or temp-table name to 
+the beginning of each of the variables being assigned."
   (interactive "sTable name: ")
   (let (done)
 	(while (not done)
@@ -318,8 +317,10 @@
 			(forward-line 1)))))))
 
 
-;; Reading & Navigation Code =========================================================
+;;;; Reading & Navigation Code
 (defun abl-narrow-to-proc ()
+  "When inside a function or internal procedure definition, narrow the buffer 
+to that definition."
   (interactive)
   (let (b e)
 	(save-excursion
@@ -331,21 +332,27 @@
 	(narrow-to-region b e)))
 
 (defun abl-occur-procs ()
+  "Show occurences of FUNCTION and PROC."
   (interactive)
   (occur (rx line-start (or "FUNCTION" "PROC"))))
 
 (defun abl-forward-proc ()
+  "Move the point forward to the beginning of the next function or internal procedure
+definition."
   (interactive)
   (right-char)
   (search-forward-regexp (rx line-start (or "FUNCTION" "PROCEDURE")))
   (beginning-of-line))
 
 (defun abl-backward-proc ()
+    "Move the point backwards to the beginning of the previous function or internal procedure
+definition."
   (interactive)
   (search-backward-regexp (rx line-start (or "FUNCTION" "PROCEDURE")))
   (beginning-of-line))
 
 (defun abl-backtab ()
+  "Decrease the indentation of the current line by 4 spaces."
   (interactive)
   (save-excursion
 	(beginning-of-line)
@@ -353,23 +360,7 @@
 	  (replace-match ""))))
 
 
-;; Skeletons =========================================================
-
-(define-skeleton abl-skel-create
-  "Insert a buffer creation, assignment, user tracking, and release."
-  nil
-  '(setq v1 (skeleton-read "Buffer: "))
-  "CREATE " v1 "." \n
-  "ASSIGN " \n "    "
-  ("Field: "  v1 "." str '(tab-to-tab-stop) "= " (skeleton-read "Value: ") & \n)
-  (save-excursion
-	(forward-line -1)
-	(end-of-line)
-	(insert ".")
-	(forward-line))
-  > -5
-  "{gnpr/gnlastx.i &file=" v1 "}" \n ;; br specific nonsense
-  "RELEASE " v1 ".\n" > -)
+;;;; Skeletons
 
 (define-skeleton abl-skel-test
   "Insert the beginning of a test procedure."
@@ -380,26 +371,24 @@
   - \n "END.\n")
 
 
-
 ;; Synthesis =========================================================
 (define-derived-mode abl-mode
   prog-mode "ABL"
   "Major mode for editing ABL"
+  :syntax-table abl-syntax-table
+  
   (set (make-local-variable 'font-lock-defaults) '(abl-font-lock-defaults))
 ;  (setq indent-line-function 'abl-indent-line)  ;this isn't ready
   (use-local-map abl-mode-map)
-  (if 1
-	  (progn
-		(make-local-variable 'pre-abbrev-expand-hook)
-		(add-hook 'pre-abbrev-expand-hook 'abl-pre-abbrev-expand-hook)
-		(abbrev-mode 1)))
+  (progn
+	(make-local-variable 'pre-abbrev-expand-hook)
+	(add-hook 'pre-abbrev-expand-hook 'abl-pre-abbrev-expand-hook)
+	(abbrev-mode 1))  
   (set (make-local-variable  'abbrev-mode) t)
-  (set-syntax-table abl-syntax-table)
   (set (make-local-variable  'save-abbrevs) nil)
   (set (make-local-variable 'indent-tabs-mode) nil)
   (set (make-local-variable 'tab-width) 4)
-  (set (make-local-variable 'tab-stop-list) (number-sequence 0 200 4))
-  (set (make-local-variable 'comment-start) "/*")
-  (set (make-local-variable 'comment-end) "*/"))
+  set (make-local-variable 'tab-stop-list) (number-sequence 0 200 4))
 
+(add-to-list 'auto-mode-alist '("\\.p\\'" . abl-mode))
 (provide 'abl-mode)
