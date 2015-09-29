@@ -221,7 +221,7 @@ definition."
 (define-skeleton abl-skel-test
   "Insert the beginning of a test procedure."
   nil
-  "PROCEDURE test_" (skeleton-read "Name:") \n
+  "PROCEDURE test_" (skeleton-read "Name:") ":" \n
   "    DEF OUTPUT PARAM p_pass     AS LOG  NO-UNDO." \n
   "DEF OUTPUT PARAM p_msg      AS CHAR NO-UNDO." \n
   - \n "END.\n")
