@@ -74,22 +74,28 @@
 
 ;;;; Highlighting
 (defvar abl-keyword-regexp
-  (regexp-opt (mapcar 'upcase abl-keyword-list) 'words))
+  (regexp-opt (append abl-keyword-list (mapcar 'upcase abl-keyword-list)) 'words))
 
 (defvar abl-string-regexp
-  (rx (and "\""
-		   (zero-or-more
-			(or (not (any "~\""))
-				"\n"))
-		   "\"")))
+  (rx (or (and "\""
+                (zero-or-more
+                 (or (not (any "~\""))
+                     "\n"))
+                "\"")
+          (and "'"
+                (zero-or-more
+                 (or (not (any "~'"))
+                     "\n"))
+                "'"))))
 
 (defvar abl-type-regexp
   (regexp-opt (mapcar 'upcase abl-type-list) 'words))
 
 (defvar abl-font-lock-defaults
-  `((,abl-keyword-regexp . (1 font-lock-builtin-face))
-	(,abl-type-regexp . (1 font-lock-type-face))
-	(,abl-string-regexp . (1 font-lock-string-face))))
+  `((case-fold . t)
+    (,abl-keyword-regexp . (1 font-lock-builtin-face))
+    (,abl-type-regexp . (1 font-lock-type-face))
+    (,abl-string-regexp . (1 font-lock-string-face))))
 
 
 ;;;; Syntax
@@ -101,6 +107,7 @@
 	(modify-syntax-entry ?/ ". 14n" st)
 	(modify-syntax-entry ?* ". 23n" st)
 	(modify-syntax-entry ?~ "\\" st)
+        (modify-syntax-entry ?' "\"" st)
 	(modify-syntax-entry ?= "w" st) ; = can be a word (For navigation)
 	st))
 						 
@@ -117,8 +124,8 @@
   (mapcar #'(lambda (v) (list v (upcase v) nil 1))
 		  (append abl-keyword-list abl-type-list)))
 
-(abbrev-table-put abl-mode-abbrev-table
-				  :regexp abl-abbrev-word-regexp)
+;; (abbrev-table-put abl-mode-abbrev-table
+;; 				  :regexp abl-abbrev-word-regexp)
 
 (defun abl-pre-abbrev-expand-hook ()
   (setq local-abbrev-table
@@ -232,18 +239,18 @@ definition."
   prog-mode "ABL"
   "Major mode for editing ABL"
   :syntax-table abl-syntax-table
-  
+
   (set (make-local-variable 'font-lock-defaults) '(abl-font-lock-defaults))
   (use-local-map abl-mode-map)
-  (progn
-	(make-local-variable 'pre-abbrev-expand-hook)
-	(add-hook 'pre-abbrev-expand-hook 'abl-pre-abbrev-expand-hook)
-	(abbrev-mode 1))  
-  (set (make-local-variable  'abbrev-mode) t)
+  ;; (progn
+  ;;       (make-local-variable 'pre-abbrev-expand-hook)
+  ;;       (add-hook 'pre-abbrev-expand-hook 'abl-pre-abbrev-expand-hook)
+  ;;       (abbrev-mode 1))  
+  ;; (set (make-local-variable  'abbrev-mode) t)
   (set (make-local-variable  'save-abbrevs) nil)
   (set (make-local-variable 'indent-tabs-mode) nil)
   (set (make-local-variable 'tab-width) 4)
-  set (make-local-variable 'tab-stop-list) (number-sequence 0 200 4))
+  (set (make-local-variable 'tab-stop-list) (number-sequence 0 200 4)))
 
 (add-to-list 'auto-mode-alist '("\\.p\\'" . abl-mode))
 (provide 'abl-mode)

@@ -1,0 +1,44 @@
+#+startup: indent
+* abl-mode
+  :PROPERTIES:
+  :CUSTOM_ID: abl-mode
+  :END:
+
+An Emacs major mode for editing Progress OpenEdge/Advanced Business
+Language files.
+
+** Installation
+
+Download =abl-mode.el=, put it in your =~/.emacs.d/= directory (or
+somewhere on your Emacs load path), and add =(load-file "abl-mode.el")=
+to your =~/emacs.d/init.el= and you should open =*.p= files in ABL mode
+(or you can invoke it explicitly with =M-x abl-mode=).
+
+** Contributing
+
+Improve =abl-mode= by
+
+- Using it (if you find yourself having to program in ABL)
+- Open [[https://github.com/neganp/abl-mode/issues][issues]] if you find
+  bugs or want to suggest new features (better support for automatic
+  indentation would be great!).
+- Open a pull request.
+
+
+** Todo list
+
+- [ ] Multiline string
+- [ ] font lock keywords
+- [ ] tear out upcase logic (ick)
+- [ ] identation
+- [ ] make a package
+
+** Copyright/License
+
+Copyright (C) 2015 by Nathaniel Knight.
+
+Provided under the [[http://en.wikipedia.org/wiki/MIT_License][MIT
+License]].
+
+See =license.txt= for copying permissions.
+
