@@ -74,7 +74,7 @@
 
 ;;;; Highlighting
 (defvar abl-keyword-regexp
-  (regexp-opt (append abl-keyword-list (mapcar 'upcase abl-keyword-list)) 'words))
+  (regexp-opt abl-keyword-list 'words))
 
 (defvar abl-string-regexp
   (rx (or (and "\""
@@ -89,11 +89,10 @@
                 "'"))))
 
 (defvar abl-type-regexp
-  (regexp-opt (mapcar 'upcase abl-type-list) 'words))
+  (regexp-opt abl-type-list 'words))
 
 (defvar abl-font-lock-defaults
-  `((case-fold . t)
-    (,abl-keyword-regexp . (1 font-lock-builtin-face))
+  `((,abl-keyword-regexp . (1 font-lock-builtin-face))
     (,abl-type-regexp . (1 font-lock-type-face))
     (,abl-string-regexp . (1 font-lock-string-face))))
 
@@ -239,7 +238,7 @@ definition."
   prog-mode "ABL"
   "Major mode for editing ABL"
   :syntax-table abl-syntax-table
-
+  (setq-local font-lock-keywords-case-fold-search t)
   (set (make-local-variable 'font-lock-defaults) '(abl-font-lock-defaults))
   (use-local-map abl-mode-map)
   ;; (progn
