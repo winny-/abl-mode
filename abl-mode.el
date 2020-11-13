@@ -78,14 +78,10 @@
 
 (defvar abl-string-regexp
   (rx (or (and "\""
-                (zero-or-more
-                 (or (not (any "~\""))
-                     "\n"))
+                (zero-or-more (not (any "~\"")))
                 "\"")
           (and "'"
-                (zero-or-more
-                 (or (not (any "~'"))
-                     "\n"))
+               (zero-or-more (not (any "~'")))
                 "'"))))
 
 (defvar abl-type-regexp
