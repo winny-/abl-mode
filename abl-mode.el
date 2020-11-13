@@ -88,9 +88,9 @@
   (regexp-opt abl-type-list 'words))
 
 (defvar abl-font-lock-defaults
-  `((,abl-keyword-regexp . (1 font-lock-builtin-face))
-    (,abl-type-regexp . (1 font-lock-type-face))
-    (,abl-string-regexp . (1 font-lock-string-face))))
+  `((,abl-keyword-regexp . font-lock-builtin-face)
+    (,abl-type-regexp . font-lock-type-face)
+    (,abl-string-regexp . font-lock-string-face)))
 
 
 ;;;; Syntax
