@@ -87,11 +87,27 @@
 (defvar abl-type-regexp
   (regexp-opt abl-type-list 'words))
 
+(defvar abl-preprocessor-regexp
+  "{&?[^
+]+}\\|&\\(global\\|local\\)-define[ 	]+\\w+"
+  ;; (rx (or
+  ;;      (seq  "{" (zero-or-more (not (any "}" "\n"))) "}")
+  ;;      (seq (any "&local-define" "&global-define")
+  ;;      (one-or-more (any " " "\t"))
+  ;;      (one-or-more (syntax symbol)))))
+  )
+
+(defface abl-preprocessor-face
+  '((t :inherit font-lock-preprocessor-face))
+  "abl-mode preprocessor face")
+
+(defvar abl-preprocessor-face 'abl-preprocessor-face)
+
 (defvar abl-font-lock-defaults
   `((,abl-keyword-regexp . font-lock-builtin-face)
     (,abl-type-regexp . font-lock-type-face)
-    (,abl-string-regexp . font-lock-string-face)))
-
+    (,abl-string-regexp . font-lock-string-face)
+    (,abl-preprocessor-regexp . abl-preprocessor-face)))
 
 ;;;; Syntax
 
