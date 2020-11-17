@@ -251,7 +251,7 @@ definition."
   "Major mode for editing ABL"
   :syntax-table abl-syntax-table
   (setq-local font-lock-keywords-case-fold-search t)
-  (set (make-local-variable 'font-lock-defaults) '(abl-font-lock-defaults))
+  (set (make-local-variable 'font-lock-defaults) '(abl-font-lock-defaults nil t))
   (use-local-map abl-mode-map)
   ;; (progn
   ;;       (make-local-variable 'pre-abbrev-expand-hook)
