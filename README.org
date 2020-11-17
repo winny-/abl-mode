@@ -35,7 +35,10 @@ Improve =abl-mode= by
 
 ** Copyright/License
 
+#+BEGIN_EXAMPLE
 Copyright (C) 2015 by Nathaniel Knight.
+Copyright (C) 2020 by Winston Weinert.
+#+END_EXAMPLE
 
 Provided under the [[http://en.wikipedia.org/wiki/MIT_License][MIT
 License]].

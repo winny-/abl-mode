@@ -1,6 +1,7 @@
 ;;;; abl-mode.el --- Major mode for editing Progress OpenEdge/ABL
 
 ;; Copyright (C) 2015 Nathaniel Knight
+;; Copyright (C) 2020 Winston Weinert
 
 ;; Author: Nathaniel Knight <nathaniel.ep@gmail.com>
 ;; Created: March 3rd, 2015
