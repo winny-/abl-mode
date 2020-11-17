@@ -32,7 +32,7 @@
 	"down" "frame" "to" "param" "parameter" "entry" "put" "close"
 	"run" "label" "no-box" "width" "where" "no-lock" "skip" "column"
 	"unformatted" "by" "buffer" "group" "view-as" "alert-box" "field"
-	"init" "query" "next" "on-error" "avail" "begins" "no-error"
+	"init" "initial" "query" "next" "on-error" "avail" "begins" "no-error"
 	"retry" "undo" "error-status" "file-info" "input-output" "buffer-copy"
 	"decimals" "table" "otherwise" "truncate" "ambiguous" "browse" "pause"
 	"before-hide" "value" "export" "import" "from" "repeat" "like"
