@@ -106,10 +106,10 @@
 (defvar abl-preprocessor-face 'abl-preprocessor-face)
 
 (defvar abl-font-lock-defaults
-  `((,abl-keyword-regexp . font-lock-builtin-face)
+  `((,abl-preprocessor-regexp . abl-preprocessor-face)
+    (,abl-keyword-regexp . font-lock-builtin-face)
     (,abl-type-regexp . font-lock-type-face)
-    (,abl-string-regexp . font-lock-string-face)
-    (,abl-preprocessor-regexp . abl-preprocessor-face)))
+    (,abl-string-regexp . font-lock-string-face)))
 
 ;;;; Syntax
 
