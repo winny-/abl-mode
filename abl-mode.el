@@ -21,7 +21,7 @@
 ;;;; Initializations
 
 (defvar abl-keyword-list
-  '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "elseif"
+  '("def" "define" "as" "extent" "if" "then" "else" "end" "do" "display" "elseif"
     "endif" "message" "absolute" "and" "or" "assign" "available"
     "recid" "can-do" "can-find" "case" "when" "create" "day" "class"
     "month" "year" "procedure" "function" "forward"
@@ -58,7 +58,10 @@
 
 (defvar abl-type-list
   '("char" "character" "int" "integer" "format" "log" "logical"
-    "yes" "no" "true" "false" "date" "dec" "decimal" "datetime"))
+    "date" "dec" "decimal" "datetime"))
+
+(defvar abl-constant-list
+  '("yes" "no" "true" "false"))
 
 (defvar abl-mode-hook nil)
 
@@ -89,6 +92,9 @@
 (defvar abl-type-regexp
   (regexp-opt abl-type-list 'words))
 
+(defvar abl-constant-regexp
+  (regexp-opt abl-constant-list 'words))
+
 (defface abl-preprocessor-face
   '((t :inherit font-lock-preprocessor-face))
   "abl-mode preprocessor face")
@@ -96,9 +102,13 @@
 (defvar abl-preprocessor-face 'abl-preprocessor-face)
 
 (defvar abl-font-lock-keywords
-  `(("&global-define\\|&scoped-define\\|{&[A-Za-z0-9-_]+}" . abl-preprocessor-face)
-    ("\\({[A-Za-z0-9-_.]+\\)[^{}]*\\(}\\)" (1 abl-preprocessor-face) (2 abl-preprocessor-face))
+  `(("&global-define\\|&scoped-define" . abl-preprocessor-face)
+    ("\\({\\)\\([A-Za-z0-9-_.]+\\)[^{}]*\\(}\\)" (1 abl-preprocessor-face) (2 font-lock-string-face) (3 abl-preprocessor-face))
+    ("\\({&\\)\\([A-Za-z0-9-_]+\\)\\(}\\)" (1 abl-preprocessor-face) (2 font-lock-string-face) (3 abl-preprocessor-face))
     ("\\_<define\\s-+[^.]*\\(?:browse\\|buffer\\|button\\|frame\\|image\\|menu\\|parameter\\|query\\|rectangle\\|stream\\|sub-menu\\|temp-table\\|work-table\\|workfile\\|variable\\)\\s-+\\(\\w+\\)\\|\\_<&global-define\\s-+\\(\\w+\\)\\|\\_<&scoped-define\\s-+\\(\\w+\\)" (1 font-lock-variable-name-face))
+    ("^procedure\\s-+\\(\\w+\\)" (1 font-lock-function-name-face))
+    ("^function\\s-+\\(\\w+\\)" (1 font-lock-function-name-face))
+    (,abl-constant-regexp . font-lock-constant-face)
     (,abl-keyword-regexp . font-lock-builtin-face)
     (,abl-type-regexp . font-lock-type-face)))
 
