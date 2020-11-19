@@ -89,27 +89,21 @@
 (defvar abl-type-regexp
   (regexp-opt abl-type-list 'words))
 
-(defvar abl-preprocessor-regexp
-  "{&?[^
-]+}\\|&\\(global\\|local\\)-define[ 	]+\\w+"
-  ;; (rx (or
-  ;;      (seq  "{" (zero-or-more (not (any "}" "\n"))) "}")
-  ;;      (seq (any "&local-define" "&global-define")
-  ;;      (one-or-more (any " " "\t"))
-  ;;      (one-or-more (syntax symbol)))))
-  )
-
 (defface abl-preprocessor-face
   '((t :inherit font-lock-preprocessor-face))
   "abl-mode preprocessor face")
 
 (defvar abl-preprocessor-face 'abl-preprocessor-face)
 
-(defvar abl-font-lock-defaults
-  `((,abl-preprocessor-regexp . abl-preprocessor-face)
+(defvar abl-font-lock-keywords
+  `(("&global-define\\|&scoped-define\\|{&[A-Za-z0-9-_]+}" . abl-preprocessor-face)
+    ("\\({[A-Za-z0-9-_.]+\\)[^{}]*\\(}\\)" (1 abl-preprocessor-face) (2 abl-preprocessor-face))
+    ("\\_<define\\s-+[^.]*\\(?:browse\\|buffer\\|button\\|frame\\|image\\|menu\\|parameter\\|query\\|rectangle\\|stream\\|sub-menu\\|temp-table\\|work-table\\|workfile\\|variable\\)\\s-+\\(\\w+\\)\\|\\_<&global-define\\s-+\\(\\w+\\)\\|\\_<&scoped-define\\s-+\\(\\w+\\)" (1 font-lock-variable-name-face))
     (,abl-keyword-regexp . font-lock-builtin-face)
-    (,abl-type-regexp . font-lock-type-face)
-    (,abl-string-regexp . font-lock-string-face)))
+    (,abl-type-regexp . font-lock-type-face)))
+
+(defvar abl-font-lock-defaults
+  `(,abl-font-lock-keywords nil t))
 
 ;;;; Syntax
 
@@ -253,7 +247,7 @@ definition."
   "Major mode for editing ABL"
   :syntax-table abl-syntax-table
   (setq-local font-lock-keywords-case-fold-search t)
-  (set (make-local-variable 'font-lock-defaults) '(abl-font-lock-defaults nil t))
+  (set (make-local-variable 'font-lock-defaults) abl-font-lock-defaults)
   (use-local-map abl-mode-map)
   ;; (progn
   ;;       (make-local-variable 'pre-abbrev-expand-hook)
