@@ -27,10 +27,10 @@ Improve =abl-mode= by
 
 ** Todo list
 
-- [ ] Multiline string
+- [X] Multiline string
 - [ ] font lock keywords
 - [ ] tear out upcase logic (ick)
-- [ ] identation
+- [ ] indentation
 - [ ] make a package
 
 ** Copyright/License
