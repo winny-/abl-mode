@@ -106,7 +106,7 @@
     ("\\({\\)\\([A-Za-z0-9-_.]+\\)[^{}]*\\(}\\)" (1 abl-preprocessor-face) (2 font-lock-string-face) (3 abl-preprocessor-face))
     ("\\({&\\)\\([A-Za-z0-9-_]+\\)\\(}\\)" (1 abl-preprocessor-face) (2 font-lock-string-face) (3 abl-preprocessor-face))
     ("\\_<\\(?:define\\s-+[^.]*\\(?:browse\\|buffer\\|button\\|frame\\|image\\|menu\\|parameter\\|query\\|rectangle\\|stream\\|sub-menu\\|temp-table\\|work-table\\|workfile\\|variable\\)\\|&scoped-define\\|global-define\\)\\s-+\\(\\w+\\)" (1 font-lock-variable-name-face))
-    ("\\_<\\(\\w+\\)\\s-+\\(?:as\\|for\\)" (1 font-lock-variable-name-face)) ; XXX this is gross
+    ("\\_<\\(\\w+\\)\\s-+\\(?:as\\|for\\)\\_>" (1 font-lock-variable-name-face)) ; XXX this is gross
     ("\\(?:procedure\\|function\\)\\s-+\\(\\w+\\)" (1 font-lock-function-name-face))
     (,abl-constant-regexp . font-lock-constant-face)
     (,abl-keyword-regexp . font-lock-builtin-face)
