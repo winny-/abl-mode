@@ -4,6 +4,8 @@
   :CUSTOM_ID: abl-mode
   :END:
 
+[[http://unmaintained.tech/][http://unmaintained.tech/badge.svg]]
+
 An Emacs major mode for editing Progress OpenEdge/Advanced Business
 Language files.
 
